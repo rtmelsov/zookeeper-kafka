@@ -1,94 +1,86 @@
-// main.go
 package main
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"log"
 	"os"
-
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-// Item – структура, описывающая продукт в заказе
 type Item struct {
 	ProductID string  `json:"product_id"`
 	Quantity  int     `json:"quantity"`
 	Price     float64 `json:"price"`
 }
 
-// Order – структура, описывающая заказ с продуктами
 type Order struct {
 	Offset     int     `json:"offset"`
 	OrderID    string  `json:"order_id"`
 	UserID     string  `json:"user_id"`
 	Items      []Item  `json:"items"`
-	TotalPrice float64 `json:"total_price"`
+	TotalPrice float64 `json:"totalPrice"`
 }
 
 func main() {
-	// Проверяем, что количество параметров при запуске программы ровно 3
 	if len(os.Args) != 3 {
 		log.Fatalf("Пример использования: %s <bootstrap-servers> <topic>\n", os.Args[0])
 	}
 
-	// Парсим параметры и получаем адрес брокера и имя топика
-	bootstrapServers := os.Args[1]
+	bServer := os.Args[1]
 	topic := os.Args[2]
 
-	// Создаём продюсера
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapServers})
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.server": bServer,
+	})
 	if err != nil {
-		log.Fatalf("Невозможно создать продюсера: %s\n", err)
+		log.Fatalf("ошибка при попытке создать продюсера: %s\n", err.Error())
 	}
 
 	log.Printf("Продюсер создан %v\n", p)
 
-	// Канал доставки событий (информации об отправленном сообщении)
 	deliveryChan := make(chan kafka.Event)
 
-	// Создаём заказ
 	value := &Order{
 		OrderID: "0001",
 		UserID:  "00001",
 		Items: []Item{
-			{ProductID: "535", Quantity: 1, Price: 300},
-			{ProductID: "125", Quantity: 2, Price: 100},
+			{ProductID: "444", Quantity: 1, Price: 300},
+			{ProductID: "123", Quantity: 2, Price: 500},
 		},
-		TotalPrice: 500.00,
+		TotalPrice: 800.00,
 	}
 
-	// Сериализуем заказ в массив
 	payload, err := json.Marshal(value)
 	if err != nil {
-		log.Fatalf("Невозможно сериализовать заказ: %s\n", err)
+		log.Fatalf("ошибка при попытке сериализовать заказ: %s\n", err.Error())
 	}
 
-	// Отправляем сообщение в брокер
-	err = p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          payload,
-		Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
+	p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{
+			Topic:     &topic,
+			Partition: kafka.PartitionAny,
+		},
+		Value: payload,
+		Headers: []kafka.Header{
+			{
+				Key:   "myTestHeader",
+				Value: []byte("header values are bynary"),
+			},
+		},
 	}, deliveryChan)
-	if err != nil {
-		log.Fatalf("Ошибка при отправке сообщения: %v\n", err)
-	}
 
-	// Ждём информацию об отправленном сообщении. (https://docs.confluent.io/kafka-clients/go/current/overview.html#synchronous-writes)
 	e := <-deliveryChan
 
-	// Приводим Events к типу *kafka.Message
 	m := e.(*kafka.Message)
 
-	// Если возникла ошибка доставки сообщения
 	if m.TopicPartition.Error != nil {
-		fmt.Printf("Ошибка доставки сообщения: %v\n", m.TopicPartition.Error)
-	} else {
-		fmt.Printf("Сообщение отправлено в топик %s [%d] офсет %v\n",
-			*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+		fmt.Printf("ошибка доставки сообщения: %s\n", m.TopicPartition.Error.Error())
 	}
-	// Закрываем продюсера
+
 	p.Close()
-	// Закрываем канал доставки событий
+
 	close(deliveryChan)
+
 }
+
