@@ -31,8 +31,9 @@ func main() {
 	topic := os.Args[2]
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.server": bServer,
+		"bootstrap.servers": bServer,
 	})
+
 	if err != nil {
 		log.Fatalf("ошибка при попытке создать продюсера: %s\n", err.Error())
 	}
@@ -83,4 +84,3 @@ func main() {
 	close(deliveryChan)
 
 }
-
