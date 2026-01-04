@@ -1,10 +1,8 @@
-## 🐳 Инфраструктура проекта (Docker Compose)
-
 # 🐘 Kafka System (ZooKeeper Mode)
 
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
-![Kafka](https://img.shields.io/badge/Apache_Kafka-ZooKeeper_Mode-231F20?style=flat&logo=apachekafka)
-![ZooKeeper](https://img.shields.io/badge/Apache_ZooKeeper-Enabled-C75C5C?style=flat&logo=apache)
+![Confluent](https://img.shields.io/badge/Confluent_Platform-7.0.1-E56020?style=flat&logo=confluent)
+![ZooKeeper](https://img.shields.io/badge/ZooKeeper-Required-C75C5C?style=flat&logo=apache)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)
 
 Проект разворачивает классическую архитектуру Kafka с использованием **ZooKeeper**. В файле `docker-compose.yml` описано взаимодействие трех ключевых сервисов:
